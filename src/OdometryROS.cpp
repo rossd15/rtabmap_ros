@@ -60,7 +60,7 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	odometry_(0),
 	warningThread_(0),
 	callbackCalled_(false),
-	frameId_("base_link"),
+	frameId_("scout_1_tf/base_footprint"),
 	odomFrameId_("odom"),
 	groundTruthFrameId_(""),
 	groundTruthBaseFrameId_(""),
@@ -70,7 +70,7 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	guessMinTime_(0.0),
 	publishTf_(true),
 	waitForTransform_(true),
-	waitForTransformDuration_(0.1), // 100 ms
+	waitForTransformDuration_(1.0), // 100 ms
 	publishNullWhenLost_(true),
 	paused_(false),
 	resetCountdown_(0),
@@ -80,11 +80,12 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	icpParams_(icpParams),
 	previousStamp_(0.0),
 	expectedUpdateRate_(0.0),
-	maxUpdateRate_(0.0),
 	odomStrategy_(Parameters::defaultOdomStrategy()),
-	waitIMUToinit_(false),
+	waitIMUToinit_(true),
 	imuProcessed_(false),
-	lastImuReceivedStamp_(0.0)
+	lastImuReceivedStamp_(0.0),
+	initialPose_(-56.434096, -49.224400, 0.411435, -0.0016577, 0.0085638, 0.3824005)
+
 {
 
 }
@@ -120,7 +121,7 @@ void OdometryROS::onInit()
 	odomLocalScanMap_ = nh.advertise<sensor_msgs::PointCloud2>("odom_local_scan_map", 1);
 	odomLastFrame_ = nh.advertise<sensor_msgs::PointCloud2>("odom_last_frame", 1);
 
-	Transform initialPose = Transform::getIdentity();
+	Transform initialPose = initialPose_; //Transform::getIdentity();
 	std::string initialPoseStr;
 	std::string configPath;
 	pnh.param("frame_id", frameId_, frameId_);
@@ -153,8 +154,7 @@ void OdometryROS::onInit()
 	pnh.param("guess_min_rotation", guessMinRotation_, guessMinRotation_);
 	pnh.param("guess_min_time", guessMinTime_, guessMinTime_);
 
-	pnh.param("expected_update_rate", expectedUpdateRate_, expectedUpdateRate_); // expected sensor rate
-	pnh.param("max_update_rate", maxUpdateRate_, maxUpdateRate_);
+	pnh.param("expected_update_rate", expectedUpdateRate_, expectedUpdateRate_);
 
 	pnh.param("wait_imu_to_init", waitIMUToinit_, waitIMUToinit_);
 
@@ -180,7 +180,6 @@ void OdometryROS::onInit()
 	NODELET_INFO("Odometry: guess_min_rotation     = %f", guessMinRotation_);
 	NODELET_INFO("Odometry: guess_min_time         = %f", guessMinTime_);
 	NODELET_INFO("Odometry: expected_update_rate   = %f Hz", expectedUpdateRate_);
-	NODELET_INFO("Odometry: max_update_rate        = %f Hz", maxUpdateRate_);
 	NODELET_INFO("Odometry: wait_imu_to_init       = %s", waitIMUToinit_?"true":"false");
 
 	configPath = uReplaceChar(configPath, '~', UDirectory::homeDir());
@@ -358,7 +357,7 @@ void OdometryROS::onInit()
 	{
 		int queueSize = 10;
 		pnh.param("queue_size", queueSize, queueSize);
-		imuSub_ = nh.subscribe("imu", queueSize*5, &OdometryROS::callbackIMU, this);
+		imuSub_ = nh.subscribe("scout_1/imu", queueSize*5, &OdometryROS::callbackIMU, this);
 		NODELET_INFO("odometry: Subscribing to IMU topic %s", imuSub_.getTopic().c_str());
 	}
 
@@ -465,8 +464,7 @@ void OdometryROS::callbackIMU(const sensor_msgs::ImuConstPtr& msg)
 				if(imu.orientation()[0] != 0 || imu.orientation()[1] != 0 || imu.orientation()[2] != 0 || imu.orientation()[3] != 0)
 				{
 					Transform rotation(0,0,0, imu.orientation()[0], imu.orientation()[1], imu.orientation()[2], imu.orientation()[3]);
-					// orientation includes roll and pitch but not yaw in local transform
-					rotation = Transform(0,0,imu.localTransform().theta()) * rotation * imu.localTransform().rotation().inverse();
+					rotation = imu.localTransform().rotation() * rotation * imu.localTransform().rotation().inverse();
 					this->reset(rotation);
 					float r,p,y;
 					rotation.getEulerAngles(r,p,y);
@@ -539,17 +537,9 @@ void OdometryROS::processData(const SensorData & data, const ros::Time & stamp)
 					previousStamp_, stamp.toSec());
 			return;
 		}
-		else if(maxUpdateRate_ > 0 &&
-				previousStamp_ > 0 &&
-				(stamp.toSec()-previousStamp_+(expectedUpdateRate_ > 0?1.0/expectedUpdateRate_:0)) < 1.0/maxUpdateRate_)
-		{
-			// throttling
-			return;
-		}
-		else if(maxUpdateRate_ == 0 &&
-				expectedUpdateRate_ > 0 &&
-			    previousStamp_ > 0 &&
-			    (stamp.toSec()-previousStamp_) < 1.0/expectedUpdateRate_)
+		else if(expectedUpdateRate_ > 0 &&
+		  previousStamp_ > 0 &&
+		  (stamp.toSec()-previousStamp_) < 1.0/expectedUpdateRate_)
 		{
 			NODELET_WARN("Odometry: Aborting odometry update, higher frame rate detected (%f Hz) than the expected one (%f Hz). (stamps: previous=%fs new=%fs)",
 					1.0/(stamp.toSec()-previousStamp_), expectedUpdateRate_, previousStamp_, stamp.toSec());
@@ -641,9 +631,9 @@ void OdometryROS::processData(const SensorData & data, const ros::Time & stamp)
 		dataCpy.setGroundTruth(groundTruth);
 	}
 	rtabmap::Transform pose = odometry_->process(dataCpy, guess_, &info);
+	guess_.setNull();
 	if(!pose.isNull())
 	{
-		guess_.setNull();
 		resetCurrentCount_ = resetCountdown_;
 
 		//*********************

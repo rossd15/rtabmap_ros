@@ -108,6 +108,7 @@ private:
 	bool waitForTransform_;
 	double waitForTransformDuration_;
 	bool publishNullWhenLost_;
+	rtabmap::Transform initialPose_;
 	rtabmap::ParametersMap parameters_;
 
 	ros::Publisher odomPub_;
@@ -137,7 +138,6 @@ private:
 	rtabmap::Transform guessPreviousPose_;
 	double previousStamp_;
 	double expectedUpdateRate_;
-	double maxUpdateRate_;
 	int odomStrategy_;
 	bool waitIMUToinit_;
 	bool imuProcessed_;
