@@ -66,7 +66,7 @@ This section shows how to install RTAB-Map ros-pkg on **ROS Melodic. RTAB-Map wo
         * Add `-DRTABMAP_SYNC_USER_DATA=ON` to `catkin_make` if you plan to use user data synchronized topics.
 
 
-### Bash script for stereo_image_proc and changing left/camera_info topic to left/camera_infoNew
+### Bash script to run stere_odometry node
 ```bash
 ./image_proc.sh
 ```
