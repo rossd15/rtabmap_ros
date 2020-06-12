@@ -12,7 +12,7 @@ For the RTAB-Map libraries and standalone application, visit [RTAB-Map's home pa
 NOTE: When launching `rtabmap_ros`'s nodes, if you have the error `error while loading shared libraries...`, try `ldconfig` or add the next line at the end of your `~/.bashrc` to fix it:
     
 ```bash
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ros/noetic/lib/x86_64-linux-gnu
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/ros/melodic/lib/x86_64-linux-gnu
 ```
 
 ## Build from source
@@ -28,16 +28,15 @@ This section shows how to install RTAB-Map ros-pkg on **ROS Melodic. RTAB-Map wo
  0. Required dependencies
      * The easiest way to get all them (Qt, PCL, VTK, OpenCV, ...) is to install/uninstall rtabmap binaries:
           ```bash
-          $ sudo apt-get install ros-noetic-rtabmap ros-noetic-rtabmap-ros
-          $ sudo apt-get remove ros-noetic-rtabmap ros-noetic-rtabmap-ros
+          $ sudo apt install ros-melodic-rtabmap ros-melodic-rtabmap-ros
+          $ sudo apt remove ros-melodic-rtabmap ros-melodic-rtabmap-ros
           ```
  
  1. Optional dependencies
      * If you want SURF/SIFT on Indigo/Jade/Melodic/Noetic (Hydro/Kinetic has already SIFT/SURF), you have to build [OpenCV]([OpenCV](http://opencv.org/)) from source to have access to *xfeatures2d* and *nonfree* modules (note that SIFT is not in *nonfree* anymore since OpenCV 4.4.0). Install it in `/usr/local` (default) and rtabmap library should link with it instead of the one installed in ROS. 
-         * On Indigo, I recommend to use latest 2.4 version ([2.4.11](https://github.com/Itseez/opencv/archive/2.4.11.zip)) and build it from source following these [instructions](http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html#building-opencv-from-source-using-cmake-using-the-command-line). RTAB-Map can build with OpenCV3+[xfeatures2d](https://github.com/Itseez/opencv_contrib/tree/master/modules/xfeatures2d) module, but `rtabmap_ros` package will have libraries conflict as `cv_bridge` is depending on OpenCV2. If you want OpenCV3+, you should build [vision-opencv](https://github.com/ros-perception/vision_opencv) package yourself (and all ros packages depending on it) so it can link on OpenCV3+.
-         * On Kinetic/Melodic/Noetic, build from source with *xfeatures2d* module (and *nonfree* module if needed) the same OpenCV version already installed on the system. You will then avoid breaking `cv_bridge` with `rtabmap_ros`. If you want to install a more recent OpenCV version, I recommend to uninstall `libopencv*` libraries (with all ros packages depending on it) and rebuild all those ros packages in your catkin workspace (to make sure `cv_bridge` is linked on the OpenCV version you just compiled).
+      * On Kinetic/Melodic/Noetic, build from source with *xfeatures2d* module (and *nonfree* module if needed) the same OpenCV version already installed on the system. You will then avoid breaking `cv_bridge` with `rtabmap_ros`. If you want to install a more recent OpenCV version, I recommend to uninstall `libopencv*` libraries (with all ros packages depending on it) and rebuild all those ros packages in your catkin workspace (to make sure `cv_bridge` is linked on the OpenCV version you just compiled).
   
-    * g2o: Should be already installed by `ros-noetic-libg2o`.
+    * g2o: Should be already installed by `ros-melodic-libg2o`.
 
     * [GTSAM](https://gtsam.org/get_started/): Install via PPA to avoid building from source.
     
