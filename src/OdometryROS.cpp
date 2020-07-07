@@ -60,7 +60,7 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	odometry_(0),
 	warningThread_(0),
 	callbackCalled_(false),
-	frameId_("base_link"),
+	frameId_("scout_1_tf/base_footprint"),
 	odomFrameId_("odom"),
 	groundTruthFrameId_(""),
 	groundTruthBaseFrameId_(""),
@@ -70,7 +70,7 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	guessMinTime_(0.0),
 	publishTf_(true),
 	waitForTransform_(true),
-	waitForTransformDuration_(0.1), // 100 ms
+	waitForTransformDuration_(1.0), // 100 ms
 	publishNullWhenLost_(true),
 	paused_(false),
 	resetCountdown_(0),
@@ -81,9 +81,17 @@ OdometryROS::OdometryROS(bool stereoParams, bool visParams, bool icpParams) :
 	previousStamp_(0.0),
 	expectedUpdateRate_(0.0),
 	odomStrategy_(Parameters::defaultOdomStrategy()),
-	waitIMUToinit_(false),
+	waitIMUToinit_(true),
 	imuProcessed_(false),
-	lastImuReceivedStamp_(0.0)
+	lastImuReceivedStamp_(0.0),
+	initialPose_(0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
+	//(-16.744058, 10.505775,  0.378483,  -0.0026189,  0.0285899, 0.0254927) //localTruth1.txt
+	// (-8.907563, -4.953102, 0.502823, -0.008248, 0.0033826, -0.778373) loop6Truth.txt
+	// (21.471856, -10.296775, 0.725005, 0.0017565, 0.0057477, 2.5484226) loop3Truth.txt
+	//(22.844341,-12.583874, 0.724178, -0.0280239, -0.0073363, 3.1414899) loop2Truth.txt
+	//(-6.966017, 9.620636, 0.394210, -0.0666901, 0.0113187, 0.3237287) loop1Truth.txt
+
+
 {
 
 }
@@ -119,7 +127,7 @@ void OdometryROS::onInit()
 	odomLocalScanMap_ = nh.advertise<sensor_msgs::PointCloud2>("odom_local_scan_map", 1);
 	odomLastFrame_ = nh.advertise<sensor_msgs::PointCloud2>("odom_last_frame", 1);
 
-	Transform initialPose = Transform::getIdentity();
+	Transform initialPose = initialPose_; //Transform::getIdentity();
 	std::string initialPoseStr;
 	std::string configPath;
 	pnh.param("frame_id", frameId_, frameId_);
@@ -355,7 +363,7 @@ void OdometryROS::onInit()
 	{
 		int queueSize = 10;
 		pnh.param("queue_size", queueSize, queueSize);
-		imuSub_ = nh.subscribe("imu", queueSize*5, &OdometryROS::callbackIMU, this);
+		imuSub_ = nh.subscribe("scout_1/imu", queueSize*5, &OdometryROS::callbackIMU, this);
 		NODELET_INFO("odometry: Subscribing to IMU topic %s", imuSub_.getTopic().c_str());
 	}
 

@@ -566,4 +566,3 @@ private:
 
 PLUGINLIB_EXPORT_CLASS(rtabmap_ros::PointCloudXYZRGB, nodelet::Nodelet);
 }
-

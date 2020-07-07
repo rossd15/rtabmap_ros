@@ -64,13 +64,13 @@ int main(int argc, char** argv)
 
 		image_transport::Publisher imageLeftPub = left_it.advertise(left_nh.resolveName("image_raw"), 1);
 		image_transport::Publisher imageRightPub = right_it.advertise(right_nh.resolveName("image_raw"), 1);
-		ros::Publisher infoLeftPub = left_nh.advertise<sensor_msgs::CameraInfo>(left_nh.resolveName("camera_info"), 1);
+		ros::Publisher infoLeftPub = left_nh.advertise<sensor_msgs::CameraInfo>(left_nh.resolveName("camera_infoNew"), 1);
 		ros::Publisher infoRightPub = right_nh.advertise<sensor_msgs::CameraInfo>(right_nh.resolveName("camera_info"), 1);
 
 		while(ros::ok())
 		{
 			rtabmap::SensorData data = camera.takeImage();
-			
+
 			ros::Time currentTime = ros::Time::now();
 
 			cv_bridge::CvImage imageLeft;

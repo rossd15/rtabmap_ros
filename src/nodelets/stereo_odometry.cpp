@@ -107,19 +107,19 @@ private:
 		}
 		else
 		{
-			ros::NodeHandle left_nh(nh, "left");
-			ros::NodeHandle right_nh(nh, "right");
-			ros::NodeHandle left_pnh(pnh, "left");
-			ros::NodeHandle right_pnh(pnh, "right");
+			ros::NodeHandle left_nh(nh, "/");
+			ros::NodeHandle right_nh(nh, "/");
+			ros::NodeHandle left_pnh(pnh, "/scout_1/camera/left");
+			ros::NodeHandle right_pnh(pnh, "/scout_1/camera/right");
 			image_transport::ImageTransport left_it(left_nh);
 			image_transport::ImageTransport right_it(right_nh);
 			image_transport::TransportHints hintsLeft("raw", ros::TransportHints(), left_pnh);
 			image_transport::TransportHints hintsRight("raw", ros::TransportHints(), right_pnh);
 
-			imageRectLeft_.subscribe(left_it, left_nh.resolveName("image_rect"), 1, hintsLeft);
-			imageRectRight_.subscribe(right_it, right_nh.resolveName("image_rect"), 1, hintsRight);
-			cameraInfoLeft_.subscribe(left_nh, "camera_info", 1);
-			cameraInfoRight_.subscribe(right_nh, "camera_info", 1);
+			imageRectLeft_.subscribe(left_it, left_nh.resolveName("/scout_1/camera/left/image_rect"), 1, hintsLeft);
+			imageRectRight_.subscribe(right_it, right_nh.resolveName("/scout_1/camera/right/image_rect"), 1, hintsRight);
+			cameraInfoLeft_.subscribe(left_nh, "scout_1/camera/left/camera_infoNew", 1);
+			cameraInfoRight_.subscribe(right_nh, "scout_1/camera/right/camera_info", 1);
 
 			if(approxSync)
 			{
@@ -211,9 +211,11 @@ private:
 				}
 
 				rtabmap::StereoCameraModel stereoModel = rtabmap_ros::stereoCameraModelFromROS(*cameraInfoLeft, *cameraInfoRight, localTransform, stereoTransform);
+				// rtabmap::StereoCameraModel stereoModel.baseline() = 0.41245;
 
 				if(alreadyRectified && stereoModel.baseline() <= 0)
 				{
+					// rtabmap::stereoCameraModel stereoModel.baseline() = 0.41245;
 					NODELET_ERROR("The stereo baseline (%f) should be positive (baseline=-Tx/fx). We assume a horizontal left/right stereo "
 							  "setup where the Tx (or P(0,3)) is negative in the right camera info msg.", stereoModel.baseline());
 					return;
@@ -371,4 +373,3 @@ private:
 PLUGINLIB_EXPORT_CLASS(rtabmap_ros::StereoOdometry, nodelet::Nodelet);
 
 }
-
